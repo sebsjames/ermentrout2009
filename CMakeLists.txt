@@ -101,6 +101,7 @@ set(MY_RD_MODULES
   ${MPLOT_MATHS_READCURVES_MODULES}
   ${MPLOT_READCURVES_MODULES}
   ${MPLOT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  ${MPLOT_SOURCE_DIR}/mplot/GraphVisual.cppm
   ${PROJECT_SOURCE_DIR}/rd_base.cppm
   ${PROJECT_SOURCE_DIR}/rd_erm.cppm
 )

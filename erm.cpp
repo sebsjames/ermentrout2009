@@ -3,30 +3,28 @@
  * Local Dynamic Instabilities', Ermentrout, Simons and Land, PLOS Comp Biol 2009
  */
 
-#ifndef FLT
-# error "Please define FLT as float or double when compiling (hint: See CMakeLists.txt)"
-#endif
+#define FLT float
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <string>
 #include <chrono>
 #include <utility>
+#include <ctime>
+#include <filesystem>
 
-// Morphologica headers: visualization and JSON config
-#include <morph/tools.h>
-#include <morph/Config.h>
-#include <morph/scale.h>
-#include <morph/ColourMap.h>
-#include <morph/Visual.h>
-#include <morph/VisualDataModel.h>
-#include <morph/HexGridVisual.h>
-#include <morph/GraphVisual.h>
-#include <morph/vec.h>
-#include <morph/MathAlgo.h>
+import sm.vec;
+import sm.vvec;
+import sm.algo;
+import sm.config;
+import sm.interval;
+import mplot.colourmap;
+import mplot.visual;
+import mplot.hexgridvisual;
+import mplot.graphvisual;
 
-// Simulation code header
-#include "rd_erm.h"
+import rd_erm;
 
 int main (int argc, char **argv)
 {
@@ -37,24 +35,24 @@ int main (int argc, char **argv)
     std::string paramsfile (argv[1]);
 
     // Get parameters from config file
-    morph::Config conf(paramsfile);
+    sm::config conf(paramsfile);
     if (!conf.ready) {
         std::cerr << "Failed to read config " << paramsfile << ". Exiting.\n";
         return 1;
     }
 
-    const unsigned int steps = conf.getUInt ("steps", 1000);
+    const std::uint32_t steps = conf.get<std::uint32_t> ("steps", 1000);
     if (steps == 0) {
         std::cerr << "Finished simulating 0 steps. Exiting.\n";
         return 1;
     }
-    const unsigned int logevery = conf.getUInt ("logevery", 100);
+    const std::uint32_t logevery = conf.get<std::uint32_t> ("logevery", 100);
     if (logevery == 0) {
         std::cerr << "Can't log every 0 steps. Exiting.\n";
         return 1;
     }
-    bool overwrite_logs = conf.getBool ("overwrite_logs", false);
-    std::string logpath = conf.getString ("logpath", "logs/erm2");
+    bool overwrite_logs = conf.get<bool> ("overwrite_logs", false);
+    std::string logpath = conf.get<std::string> ("logpath", "logs/erm2");
     if (argc == 3) {
         std::string argpath(argv[2]);
         std::cerr << "Overriding the config-given logpath " << logpath << " with " << argpath << std::endl;
@@ -68,30 +66,30 @@ int main (int argc, char **argv)
 
     std::cout << "steps to simulate: " << steps << std::endl;
 
-    const unsigned int plotevery = conf.getUInt ("plotevery", 10);
-    const unsigned int win_width = conf.getUInt ("win_width", 340);
-    unsigned int win_height = static_cast<unsigned int>(0.8824f * (float)win_width);
+    const std::uint32_t plotevery = conf.get<std::uint32_t> ("plotevery", 10);
+    const std::uint32_t win_width = conf.get<std::uint32_t> ("win_width", 340);
+    std::uint32_t win_height = static_cast<std::uint32_t>(0.8824f * (float)win_width);
 
     // Instantiate the model object
-    RD_Erm<FLT> RD;
-    RD.svgpath = conf.getString ("svgpath", ""); // We'll do an elliptical boundary if svgpath is empty
-    RD.ellipse_a = conf.getDouble ("ellipse_a", 0.8);
-    RD.ellipse_b = conf.getDouble ("ellipse_b", 0.6);
+    sm::rd_erm<FLT> RD;
+    RD.svgpath = conf.get<std::string> ("svgpath", ""); // We'll do an elliptical boundary if svgpath is empty
+    RD.ellipse_a = conf.get<FLT> ("ellipse_a", FLT{0.8});
+    RD.ellipse_b = conf.get<FLT> ("ellipse_b", FLT{0.6});
     RD.logpath = logpath;
-    RD.set_dt(static_cast<FLT>(conf.getDouble ("dt", 0.00001)));
-    RD.hextohex_d = conf.getFloat ("hextohex_d", 0.01f);
-    RD.boundaryFalloffDist = conf.getFloat ("boundaryFalloffDist", 0.01f);
+    RD.set_dt(static_cast<FLT>(conf.get<FLT> ("dt", FLT{0.00001})));
+    RD.hextohex_d = conf.get<FLT> ("hextohex_d", FLT{0.01});
+    RD.boundaryFalloffDist = conf.get<FLT> ("boundaryFalloffDist", FLT{0.01});
     RD.N = 1;
-    RD.Dn = conf.getDouble ("Dn", 0.3);
-    RD.Dc = conf.getDouble ("Dc", 0.3*RD.Dn); // 0.3 * Dn
-    RD.beta = conf.getDouble ("beta", 5.0);
-    RD.a = conf.getDouble ("a", 1.0);
-    RD.b = conf.getDouble ("b", 1.0);
-    RD.mu = conf.getDouble ("mu", 1.0);
-    RD.chi = conf.getDouble ("chi", -1.0);
+    RD.Dn = conf.get<FLT> ("Dn", FLT{0.3});
+    RD.Dc = conf.get<FLT> ("Dc", FLT{0.3} * RD.Dn); // 0.3 * Dn
+    RD.beta = conf.get<FLT> ("beta", FLT{5});
+    RD.a = conf.get<FLT> ("a", FLT{1});
+    RD.b = conf.get<FLT> ("b", FLT{1});
+    RD.mu = conf.get<FLT> ("mu", FLT{1});
+    RD.chi = conf.get<FLT> ("chi", FLT{-1});
     if (RD.chi < 0.0) {
         // Set chi to Dn, as in the paper (see linear analysis)
-        RD.chi = RD.Dn; // or: conf.getDouble ("chi", 0.3);
+        RD.chi = RD.Dn; // or: conf.get<FLT> ("chi", 0.3);
     }
 
     // Allocate and initialise the model
@@ -101,12 +99,12 @@ int main (int argc, char **argv)
     RD.init();
 
     // Autoscale the colour map on each step?
-    bool do_autoscale = conf.getBool ("autoscale", false);
+    bool do_autoscale = conf.get<bool> ("autoscale", false);
 
     // Now create a log directory if necessary, and exit on any failures.
-    if (morph::tools::dirExists (logpath) == false) {
-        morph::tools::createDir (logpath);
-        if (morph::tools::dirExists (logpath) == false) {
+    if (std::filesystem::is_directory (logpath) == false) {
+        std::filesystem::create_directories (logpath);
+        if (std::filesystem::is_directory (logpath) == false) {
             std::cerr << "Failed to create the logpath directory "
                       << logpath << " which does not exist.\n";
             return 1;
@@ -114,13 +112,17 @@ int main (int argc, char **argv)
     } else {
         // Directory DOES exist. See if it contains a previous run and
         // exit without overwriting to avoid confusion.
-        if (overwrite_logs == false
-            && (morph::tools::fileExists (logpath + "/params.json") == true
-                || morph::tools::fileExists (logpath + "/positions.h5") == true)) {
-            std::cerr << "Seems like a previous simulation was logged in " << logpath << ".\n"
-                      << "Please clean it out manually, choose another directory or set\n"
-                      << "overwrite_logs to true in your parameters config JSON file.\n";
-            return 1;
+        if (overwrite_logs == false) {
+            if ((std::filesystem::exists (logpath + "/params.json")
+                 && std::filesystem::is_regular_file (logpath + "/params.json"))
+                ||
+                (std::filesystem::exists (logpath + "/positions.h5")
+                 && std::filesystem::is_regular_file (logpath + "/positions.h5"))) {
+                std::cerr << "Seems like a previous simulation was logged in " << logpath << ".\n"
+                          << "Please clean it out manually, choose another directory or set\n"
+                          << "overwrite_logs to true in your parameters config JSON file.\n";
+                return 1;
+            }
         }
     }
 
@@ -129,74 +131,73 @@ int main (int argc, char **argv)
     RD.savePositions();
 
     // Set up the morph::Visual object
-    morph::Visual v (win_width, win_height, "Ermentrout (Keller-Segel)");
+    mplot::Visual<> v (win_width, win_height, "Ermentrout (Keller-Segel)");
     v.zNear = 0.001;
     v.zFar = 500;
     v.fov = 45;
-    v.showCoordArrows = true;
-    v.showTitle = false;
+    v.showCoordArrows (true);
+    v.showTitle (false);
     // You can lock movement of the scene
-    v.sceneLocked = conf.getBool ("sceneLocked", false);
+    v.sceneLocked (conf.get<bool> ("sceneLocked", false));
     // You can set the default scene x/y/z offsets
-    v.setSceneTrans (conf.getFloat ("x_default", 0.0f),
-                     conf.getFloat ("y_default", 0.0f),
-                     conf.getFloat ("z_default", -5.0f));
+    v.setSceneTrans (conf.get<float> ("x_default", 0.0f),
+                     conf.get<float> ("y_default", 0.0f),
+                     conf.get<float> ("z_default", -5.0f));
     // Make this larger to "scroll in and out of the image" faster
     v.scenetrans_stepsize = 0.5;
 
     // Add two morph::HexGridVisuals to the morph::Visual.
 
     // A 2D scaling to apply to the visuals
-    float myscale = conf.getFloat ("size_scale", 1.0f);
+    float myscale = conf.get<float> ("size_scale", 1.0f);
 
     // A z position to place the hexgrid visuals
     float _Z = 0.0f;
 
-    morph::vec<float, 3> spatOff = {0,0,_Z}; // spatial offset
+    sm::vec<float, 3> spatOff = {0,0,_Z}; // spatial offset
     // Data scaling parameters
     float _m = 0.2;
     float _c = 0.0;
-    morph::scale<FLT, float> cscale;
-    cscale.setParams (_m, _c);
+    sm::scale<FLT, float> cscale;
+    cscale.set_params (_m, _c);
 
-    // Set up a 3D map of the surface RD.n[0] using a morph::HexGridVisual
-    spatOff[0] -= 0.6 * (RD.hg->width());
-    auto hgv1 = std::make_unique<morph::HexGridVisual<FLT>> (RD.hg.get(), spatOff);
-    v.bindmodel (hgv1);
-    hgv1->setSizeScale (myscale, myscale);
+    // Set up a 3D map of the surface RD.n[0] using a mplot::HexGridVisual
+    spatOff[0] -= myscale * (0.6 * (RD.hg->width()));
+    auto hgv1 = std::make_unique<mplot::HexGridVisual<FLT>> (RD.hg.get(), spatOff);
+    hgv1->set_parent (v.get_id());
+    hgv1->scaleViewMatrix (myscale);
     hgv1->setScalarData (&RD.n[0]);
     // You can directly set VisualDataModel::zScale and ::colourScale:
-    hgv1->zScale.setParams (_m/10.0f, _c/10.0f);
+    hgv1->zScale.set_params (_m/10.0f, _c/10.0f);
     // ...or use setters to copy one in:
     hgv1->setCScale (cscale);
-    hgv1->cm.setType (morph::ColourMapType::Jet);
-    hgv1->hexVisMode = morph::HexVisMode::Triangles;
-    hgv1->addLabel ("n (axon density)", {-0.6f, RD.hg->width()/2.0f, 0}, morph::TextFeatures(0.12f, 64, morph::colour::white));
+    hgv1->cm.setType (mplot::ColourMapType::Jet);
+    hgv1->hexVisMode = mplot::HexVisMode::Triangles;
+    hgv1->addLabel ("n (axon density)", {-0.6f, RD.hg->width()/2.0f, 0}, mplot::TextFeatures(0.12f, 64, mplot::colour::white));
     hgv1->finalize();
     auto hgv1p = v.addVisualModel (hgv1);
 
     // Set up a 3D map of the surface RD.c[0]
     spatOff[0] *= -1;
-    auto hgv2 = std::make_unique<morph::HexGridVisual<FLT>> (RD.hg.get(), spatOff);
-    v.bindmodel (hgv2);
-    hgv2->setSizeScale (myscale, myscale);
+    auto hgv2 = std::make_unique<mplot::HexGridVisual<FLT>> (RD.hg.get(), spatOff);
+    hgv2->set_parent (v.get_id());
+    hgv2->scaleViewMatrix (myscale);
     hgv2->setScalarData (&RD.c[0]);
-    hgv2->zScale.setParams (_m/10.0f, _c/10.0f);
+    hgv2->zScale.set_params (_m/10.0f, _c/10.0f);
     hgv2->setCScale (cscale);
-    hgv2->cm.setType (morph::ColourMapType::Jet);
-    hgv2->hexVisMode = morph::HexVisMode::HexInterp;
-    hgv2->addLabel ("c (chemoattractant)", {-0.7f, RD.hg->width()/2.0f, 0}, morph::TextFeatures(0.12f, 64, morph::colour::white));
+    hgv2->cm.setType (mplot::ColourMapType::Jet);
+    hgv2->hexVisMode = mplot::HexVisMode::HexInterp;
+    hgv2->addLabel ("c (chemoattractant)", {-0.7f, RD.hg->width()/2.0f, 0}, mplot::TextFeatures(0.12f, 64, mplot::colour::white));
     hgv2->finalize();
     auto hgv2p = v.addVisualModel (hgv2);
 
-    // Set up a 2D graph with morph::GraphVisual
+    // Set up a 2D graph with mplot::GraphVisual
     spatOff = {0.5f, -2.0f, 0.0f};
-    auto graph1 = std::make_unique<morph::GraphVisual<FLT>> (spatOff);
-    v.bindmodel (graph1);
+    auto graph1 = std::make_unique<mplot::GraphVisual<FLT>> (spatOff);
+    graph1->set_parent (v.get_id());
     graph1->setdarkbg(); // colours axes and text
-    graph1->twodimensional = true;
-    graph1->setlimits (0, steps*RD.get_dt(), 0, conf.getFloat("graph_ymax", 40000.0f));
-    graph1->policy = morph::stylepolicy::lines;
+    graph1->setlimits (0, steps*RD.get_dt(), 0, conf.get<float>("graph_ymax", 40000.0f));
+    graph1->policy = mplot::stylepolicy::lines;
     graph1->ylabel = "Sum";
     graph1->xlabel = "Sim time (s)";
     graph1->prepdata ("n");
@@ -210,32 +211,27 @@ int main (int argc, char **argv)
     // Start the loop
     bool doing = true;
     static constexpr bool debug_ranges = false;
-    morph::range<FLT> mm; // maxmin
-    while (doing) {
+
+    // Use a pointer cast to get access to the range() function in vvec with the std::vectors n[0] and c[0]
+    auto n0 = static_cast<sm::vvec<FLT>*>(&RD.n[0]);
+    auto c0 = static_cast<sm::vvec<FLT>*>(&RD.c[0]);
+
+    while (doing && !v.readyToFinish()) {
         // Step the model:
         RD.step();
 
         if ((RD.stepCount % plotevery) == 0) {
             // Plot n and c
             if (do_autoscale == true) {
-                mm = morph::MathAlgo::maxmin (RD.n[0]);
-                hgv1p->colourScale.compute_scaling (mm.min, mm.max);
-                mm = morph::MathAlgo::maxmin (RD.c[0]);
-                hgv2p->colourScale.compute_scaling (mm.min, mm.max);
+                hgv1p->colourScale.compute_scaling (n0->range());
+                hgv2p->colourScale.compute_scaling (c0->range());
             }
 
-            if constexpr (debug_ranges) {
-                mm = morph::MathAlgo::maxmin (RD.n[0]);
-                std::cout << "n range: " << std::abs(mm.min - mm.max) << std::endl;
-                mm = morph::MathAlgo::maxmin (RD.c[0]);
-                std::cout << "c range: " << std::abs(mm.min - mm.max) << std::endl;
-            }
-
-            hgv1p->updateData (&RD.n[0]);
-            hgv2p->updateData (&RD.c[0]);
+            hgv1p->updateData (n0);
+            hgv2p->updateData (c0);
             // Append to the 2D graph of sums:
-            graph1p->append ((float)RD.stepCount*RD.get_dt(), RD.sum_n[0], 0);
-            graph1p->append ((float)RD.stepCount*RD.get_dt(), RD.sum_c[0], 1);
+            graph1p->append ((float)RD.stepCount * RD.get_dt(), RD.sum_n[0], 0);
+            graph1p->append ((float)RD.stepCount * RD.get_dt(), RD.sum_c[0], 1);
         }
 
          // Save data every 'logevery' steps
@@ -260,15 +256,13 @@ int main (int argc, char **argv)
     RD.saveState();
 
     // Add simulation runtime information to the config, before saving it out as params.json
-    conf.set ("float_width", (unsigned int)sizeof(FLT));
-    std::string tnow = morph::tools::timeNow();
+    conf.set ("float_width", static_cast<std::uint32_t>(sizeof(FLT)));
+    std::time_t curtime = std::time (nullptr);
+    std::string tnow = std::asctime(std::localtime (&curtime));
     conf.set ("sim_ran_at_time", tnow.substr(0,tnow.size()-1));
     conf.set ("final_step", RD.stepCount);
     conf.set ("hextohex_d", RD.hextohex_d);
     conf.set ("dt", RD.get_dt());
-#ifdef __GLN__ // Currently Config::insertGitInfo fails on Macs and Windows
-    conf.insertGitInfo ("sim/");
-#endif
     // Store the binary name and command argument into root, too.
     if (argc > 0) { conf.set("argv0", argv[0]); }
     if (argc > 1) { conf.set("argv1", argv[1]); }
@@ -279,8 +273,8 @@ int main (int argc, char **argv)
                   << conf.emsg << std::endl;
     }
 
-    std::cout << "Press x in graphics window to exit.\n";
+    std::cout << "Finished simulating. Press Ctrl-q in graphics window to exit.\n";
     v.keepOpen();
 
     return 0;
-};
+}

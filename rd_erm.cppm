@@ -2,6 +2,7 @@ module;
 /*
  * 2D Ermentrout system deriving from RD_Base.
  */
+#include <cstdint>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -27,7 +28,7 @@ export namespace sm
     {
     public:
         //! Set N>1 for maintaining multiple expression gradients
-        alignas(alignof(unsigned int)) unsigned int N = 1;
+        alignas(alignof(std::uint32_t)) std::uint32_t N = 1;
         //! The c_i(x,t) variables from the Ermentrout paper (chemoattractant concentration)
         alignas(alignof(std::vector<std::vector<F> >)) std::vector<std::vector<F> > c;
         //! The n_i(x,t) variables from the Ermentrout paper (density of tc axons)
@@ -58,13 +59,13 @@ export namespace sm
         alignas(F) F chi = Dn;
 
         //! Frame number, used when saving PNG movie frames.
-        unsigned int frameN = 0;
+        std::uint32_t frameN = 0;
 
         //! Simple constructor; no arguments.
-        RD_Erm() : morph::RD_Base<F>() {}
+        rd_erm() : sm::rd_base<F>() {}
 
         //! Perform memory allocations, vector resizes and so on.
-        virtual void allocate() { morph::RD_Base<F>::allocate(); }
+        virtual void allocate() { sm::rd_base<F>::allocate(); }
 
         //! Initialise HexGrid, variables. Carry out any one-time computations of the model.
         virtual void init()
@@ -79,7 +80,7 @@ export namespace sm
 
             // Initialise with noise
             F noiseamp = F{0.1};
-            for (unsigned int i  = 0; i < this->N; ++i) {
+            for (std::uint32_t i  = 0; i < this->N; ++i) {
                 this->noiseify_vector_variable (this->n[i], 1., noiseamp);
                 this->noiseify_vector_variable (this->c[i], beta*0.5, noiseamp);
             }
@@ -90,7 +91,7 @@ export namespace sm
         {
             this->stepCount++;
 
-            for (unsigned int i=0; i<this->N; ++i) {
+            for (std::uint32_t i=0; i<this->N; ++i) {
 
                 sum_n[i] = F{0};
                 sum_c[i] = F{0};
@@ -99,7 +100,7 @@ export namespace sm
                 this->compute_lapl (n[i], i);       // populate lapl[i] with laplacian of n
 
                 // integrate n
-                for (unsigned int h=0; h<this->nhex; ++h) {
+                for (std::uint32_t h=0; h<this->nhex; ++h) {
                     n[i][h] += (a - b*n[i][h] + Dn*lapl[i][h] - chi*poiss[i][h])*this->dt;
                     sum_n[i] += n[i][h];
                 }
@@ -108,7 +109,7 @@ export namespace sm
 
                 // integrate c
                 F n2;
-                for (unsigned int h=0; h<this->nhex; ++h) {
+                for (std::uint32_t h=0; h<this->nhex; ++h) {
                     n2 = n[i][h]*n[i][h];
                     c[i][h] += (beta*n2/(F{1}+n2) - mu*c[i][h] +Dc*lapl[i][h])*this->dt;
                     sum_c[i] += c[i][h];
@@ -117,10 +118,10 @@ export namespace sm
         }
 
         //! Computes the Laplacian Stable with dt = 0.0001;
-        void compute_lapl (std::vector<F>& fa, unsigned int i)
+        void compute_lapl (std::vector<F>& fa, std::uint32_t i)
         {
 #pragma omp parallel for schedule(static) shared(lapl, fa, i)
-            for (unsigned int hi=0; hi<this->nhex; ++hi) {
+            for (std::uint32_t hi=0; hi<this->nhex; ++hi) {
 
                 // 1. The D Del^2 term
 
@@ -162,11 +163,11 @@ export namespace sm
         }
 
         //! Computes the Poisson term. Stable with dt = 0.0001;
-        void compute_poiss (std::vector<F>& fa1, std::vector<F>& fa2, unsigned int i)
+        void compute_poiss (std::vector<F>& fa1, std::vector<F>& fa2, std::uint32_t i)
         {
             // Compute non-linear term
 #pragma omp parallel for schedule(static) shared(poiss, fa1, fa2)
-            for (unsigned int hi=0; hi<this->nhex; ++hi) {
+            for (std::uint32_t hi=0; hi<this->nhex; ++hi) {
 
                 std::vector<F> dum1(6,fa1[hi]);
                 std::vector<F> dum2(6,fa2[hi]);
@@ -212,10 +213,10 @@ export namespace sm
         void saveState()
         {
             std::string fname = this->logpath + "/2Derm.h5";
-            morph::HdfData data (fname);
+            sm::hdfdata data (fname, std::ios::out | std::ios::trunc);
 
             // Save some variables
-            for (unsigned int i = 0; i<this->N; ++i) {
+            for (std::uint32_t i = 0; i<this->N; ++i) {
                 std::stringstream vss;
                 vss << "c_" << i;
                 std::string vname = vss.str();
@@ -237,5 +238,5 @@ export namespace sm
             this->saveHexPositions (data);
         }
 
-    }; // RD_Erm
+    }; // rd_erm
 } // namespace
