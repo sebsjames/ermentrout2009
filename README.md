@@ -64,20 +64,18 @@ cd ..
 
 This program reproduces some of Fig 5. A i-iv. I don't get quite the same results for Aii or Aiii (the 'Mercedes' and the 'baseball').
 
-### Ai
-
-Dn = 200, Dc = 35
+### Ai 'Coffeebean' Dn = 200, Dc = 35
 
 ![A screenshot of my reproduction of Fig 5 A i](https://github.com/sebsjames/ermentrout2009/blob/main/screenshots/fig5Ai.png?raw=true)
 
-Dn = 100, Dc = 18
+### Aii 'Mercedes' Dn = 100, Dc = 18
 
 ![A screenshot of my reproduction of Fig 5 A ii](https://github.com/sebsjames/ermentrout2009/blob/main/screenshots/fig5Aii.png?raw=true)
 
-Dn = 60, Dc = 14
+### Aiii 'Baseball' Dn = 60, Dc = 14
 
 ![A screenshot of my reproduction of Fig 5 A iii](https://github.com/sebsjames/ermentrout2009/blob/main/screenshots/fig5Aiii.png?raw=true)
 
-Dn = 8, Dc = 2
+### Aiv 'Bullseye' Dn = 8, Dc = 2
 
 ![A screenshot of my reproduction of Fig 5 A iv](https://github.com/sebsjames/ermentrout2009/blob/main/screenshots/fig5Aiv.png?raw=true)
