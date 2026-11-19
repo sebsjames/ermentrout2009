@@ -6,7 +6,7 @@
     "overwrite_logs": true,
     "logpath" : "./logs/erm",
     "hextohex_d" : 0.02,
-    "svgpath" : "../morphologica/boundaries/whiskerbarrels.svg",
+    "svgpath" : "./boundaries/whiskerbarrels.svg",
     "dt" : 0.0001,
     "boundaryFalloffDist" : 0.01,
     "Dn" : 0.05,

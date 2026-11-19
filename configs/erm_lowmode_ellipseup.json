@@ -7,7 +7,7 @@
     "overwrite_logs": true,
     "logpath" : "./logs/erm_lowmode_ellipseup",
     "hextohex_d" : 0.01,
-    "svgpath" : "./ellipse_up_big.svg",
+    "svgpath" : "./boundaries/ellipse.svg",
     "dt" : 0.00001,
     "boundaryFalloffDist" : 0.01,
     "Dn" : 0.2,

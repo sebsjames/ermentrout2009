@@ -130,23 +130,12 @@ int main (int argc, char **argv)
     // created/verified ready), positions can be saved to file.
     RD.savePositions();
 
-    // Set up the morph::Visual object
+    // Set up the mplot::Visual object
     mplot::Visual<> v (win_width, win_height, "Ermentrout (Keller-Segel)");
-    v.zNear = 0.001;
-    v.zFar = 500;
-    v.fov = 45;
-    v.showCoordArrows (true);
-    v.showTitle (false);
-    // You can lock movement of the scene
-    v.sceneLocked (conf.get<bool> ("sceneLocked", false));
     // You can set the default scene x/y/z offsets
     v.setSceneTrans (conf.get<float> ("x_default", 0.0f),
                      conf.get<float> ("y_default", 0.0f),
                      conf.get<float> ("z_default", -5.0f));
-    // Make this larger to "scroll in and out of the image" faster
-    v.scenetrans_stepsize = 0.5;
-
-    // Add two morph::HexGridVisuals to the morph::Visual.
 
     // A 2D scaling to apply to the visuals
     float myscale = conf.get<float> ("size_scale", 1.0f);
@@ -173,7 +162,7 @@ int main (int argc, char **argv)
     hgv1->setCScale (cscale);
     hgv1->cm.setType (mplot::ColourMapType::Jet);
     hgv1->hexVisMode = mplot::HexVisMode::Triangles;
-    hgv1->addLabel ("n (axon density)", {-0.6f, RD.hg->width()/2.0f, 0}, mplot::TextFeatures(0.12f, 64, mplot::colour::white));
+    hgv1->addLabel ("n (axon density)", {-0.6f, RD.hg->width() / 1.9f, 0}, mplot::TextFeatures (0.12f, 64));
     hgv1->finalize();
     auto hgv1p = v.addVisualModel (hgv1);
 
@@ -187,7 +176,7 @@ int main (int argc, char **argv)
     hgv2->setCScale (cscale);
     hgv2->cm.setType (mplot::ColourMapType::Jet);
     hgv2->hexVisMode = mplot::HexVisMode::HexInterp;
-    hgv2->addLabel ("c (chemoattractant)", {-0.7f, RD.hg->width()/2.0f, 0}, mplot::TextFeatures(0.12f, 64, mplot::colour::white));
+    hgv2->addLabel ("c (chemoattractant)", {-0.7f, RD.hg->width() / 1.9f, 0}, mplot::TextFeatures (0.12f, 64));
     hgv2->finalize();
     auto hgv2p = v.addVisualModel (hgv2);
 
@@ -195,8 +184,7 @@ int main (int argc, char **argv)
     spatOff = {0.5f, -2.0f, 0.0f};
     auto graph1 = std::make_unique<mplot::GraphVisual<FLT>> (spatOff);
     graph1->set_parent (v.get_id());
-    graph1->setdarkbg(); // colours axes and text
-    graph1->setlimits (0, steps*RD.get_dt(), 0, conf.get<float>("graph_ymax", 40000.0f));
+    graph1->setlimits (0, steps * RD.get_dt(), 0, conf.get<float>("graph_ymax", 40000.0f));
     graph1->policy = mplot::stylepolicy::lines;
     graph1->ylabel = "Sum";
     graph1->xlabel = "Sim time (s)";
@@ -243,7 +231,7 @@ int main (int argc, char **argv)
         // After a while, stop:
         if (RD.stepCount > steps) { doing = false; }
 
-        // rendering the graphics.
+        // render the graphics not on every loop, but at about 60 Hz. On non-rendering loops, we only step the RD system.
         std::chrono::steady_clock::duration sincerender = std::chrono::steady_clock::now() - lastrender;
         if (std::chrono::duration_cast<std::chrono::milliseconds>(sincerender).count() > 17) { // 17 is about 60 Hz
             v.poll();
