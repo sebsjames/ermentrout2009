@@ -132,10 +132,7 @@ int main (int argc, char **argv)
 
     // Set up the mplot::Visual object
     mplot::Visual<> v (win_width, win_height, "Ermentrout (Keller-Segel)");
-    // You can set the default scene x/y/z offsets
-    v.setSceneTrans (conf.get<float> ("x_default", 0.0f),
-                     conf.get<float> ("y_default", 0.0f),
-                     conf.get<float> ("z_default", -5.0f));
+    v.setSceneTrans (sm::vec<float,3>{ float{-0.037025}, float{0.695023}, float{-6.09497} });
 
     // A 2D scaling to apply to the visuals
     float myscale = conf.get<float> ("size_scale", 1.0f);
@@ -154,23 +151,22 @@ int main (int argc, char **argv)
     spatOff[0] -= myscale * (0.6 * (RD.hg->width()));
     auto hgv1 = std::make_unique<mplot::HexGridVisual<FLT>> (RD.hg.get(), spatOff);
     hgv1->set_parent (v.get_id());
-    hgv1->scaleViewMatrix (myscale);
     hgv1->setScalarData (&RD.n[0]);
     // You can directly set VisualDataModel::zScale and ::colourScale:
     hgv1->zScale.set_params (_m/10.0f, _c/10.0f);
     // ...or use setters to copy one in:
     hgv1->setCScale (cscale);
     hgv1->cm.setType (mplot::ColourMapType::Jet);
-    hgv1->hexVisMode = mplot::HexVisMode::Triangles;
+    hgv1->hexVisMode = mplot::HexVisMode::HexInterp;
     hgv1->addLabel ("n (axon density)", {-0.6f, RD.hg->width() / 1.9f, 0}, mplot::TextFeatures (0.12f, 64));
     hgv1->finalize();
     auto hgv1p = v.addVisualModel (hgv1);
+    hgv1p->scaleViewMatrix (myscale);
 
     // Set up a 3D map of the surface RD.c[0]
     spatOff[0] *= -1;
     auto hgv2 = std::make_unique<mplot::HexGridVisual<FLT>> (RD.hg.get(), spatOff);
     hgv2->set_parent (v.get_id());
-    hgv2->scaleViewMatrix (myscale);
     hgv2->setScalarData (&RD.c[0]);
     hgv2->zScale.set_params (_m/10.0f, _c/10.0f);
     hgv2->setCScale (cscale);
@@ -179,6 +175,7 @@ int main (int argc, char **argv)
     hgv2->addLabel ("c (chemoattractant)", {-0.7f, RD.hg->width() / 1.9f, 0}, mplot::TextFeatures (0.12f, 64));
     hgv2->finalize();
     auto hgv2p = v.addVisualModel (hgv2);
+    hgv2p->scaleViewMatrix (myscale);
 
     // Set up a 2D graph with mplot::GraphVisual
     spatOff = {0.5f, -2.0f, 0.0f};
@@ -196,13 +193,12 @@ int main (int argc, char **argv)
     // Set up the render clock
     std::chrono::steady_clock::time_point lastrender = std::chrono::steady_clock::now();
 
-    // Start the loop
-    bool doing = true;
-    static constexpr bool debug_ranges = false;
-
     // Use a pointer cast to get access to the range() function in vvec with the std::vectors n[0] and c[0]
     auto n0 = static_cast<sm::vvec<FLT>*>(&RD.n[0]);
     auto c0 = static_cast<sm::vvec<FLT>*>(&RD.c[0]);
+
+    // Start the loop
+    bool doing = true;
 
     while (doing && !v.readyToFinish()) {
         // Step the model:
