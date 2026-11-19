@@ -1,7 +1,7 @@
 {
     "desc_simulation" : "This is an Ermentrout Keller-Segel based sub-barrel system. Fig 5Ai",
     "steps" : 200000,
-    "win_width" : 800,
+    "win_width" : 1800,
     "logevery": 100000,
     "plotevery": 100,
     "overwrite_logs": true,
