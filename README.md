@@ -1,6 +1,6 @@
 # Ermentrout 2009 reaction diffusion system
 
-The Keller-Segal equations applied to whisker barrel cortex.
+The Keller-Segal equations applied to sub-barrels in the rat or mouse whisker barrel cortex.
 
 This implements the system described in *Subbarrel Patterns in Somatosensory Cortical Barrels Can Emerge from Local Dynamic Instabilities* by Ermentrout, Simons and Land:
 
