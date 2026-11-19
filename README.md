@@ -6,6 +6,9 @@ This implements the system described in *Subbarrel Patterns in Somatosensory Cor
 
 https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000537
 
+![A screenshot of a reaction diffusion system which makes a cross-shaped pattern](https://github.com/sebsjames/ermentrout2009/blob/main/celtic_cross.png?raw=true)
+
+
 ## Dependencies
 
 This program uses C++ modules. At the time of writing, this means that
