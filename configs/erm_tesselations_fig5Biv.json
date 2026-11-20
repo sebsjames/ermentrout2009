@@ -8,7 +8,7 @@
     "logpath" : "./logs/erm",
     "hextohex_d" : 0.0078125,
     "size_scale" : 4,
-    "svgpath" : "polygon.svg",
+    "svgpath" : "./boundaries/polygon.svg",
     "dt" : 0.0000001,
     "autoscale" : true,
     "boundaryFalloffDist" : 0.007,
