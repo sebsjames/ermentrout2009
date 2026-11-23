@@ -25,13 +25,15 @@ find_package(glfw3 3.3 REQUIRED)
 find_package(Freetype REQUIRED)
 
 #
-# Define locations of our three submodules, located in extern/
+# Define locations of our submodules
 #
 
 set(MPLOT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/mathplot" CACHE PATH "The path to sebsjames/mathplot")
 set(MATHS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/maths" CACHE PATH "The path to sebsjames/maths")
 set(JSON_SOURCE_DIR "${PROJECT_SOURCE_DIR}/json" CACHE PATH "The path to nlohmann/json")
 set(MATHS_CONFIG_SOURCE_DIR "${PROJECT_SOURCE_DIR}/maths_config" CACHE PATH "The path to sebsjames/maths_config")
+set(MATHS_HDF_SOURCE_DIR "${PROJECT_SOURCE_DIR}/maths_hdf" CACHE PATH "The path to sebsjames/maths_hdf")
+set(MPLOT_READCURVES_SOURCE_DIR "${PROJECT_SOURCE_DIR}/mathplot_readcurves" CACHE PATH "The path to sebsjames/mathplot_readcurves")
 
 #
 # Set compiler flags
@@ -70,6 +72,13 @@ setup_module_variables_for_mathplot (${MPLOT_SOURCE_DIR} ${MATHS_SOURCE_DIR} ${J
 # maths_config (for sm::config)
 include(${MATHS_CONFIG_SOURCE_DIR}/cmake/module_definitions.cmake)
 setup_module_variables_for_maths_config (${MATHS_CONFIG_SOURCE_DIR} ${JSON_SOURCE_DIR} ${MATHS_SOURCE_DIR})
+# maths_hdf
+include(${MATHS_HDF_SOURCE_DIR}/cmake/module_definitions.cmake)
+setup_module_variables_for_maths_hdf (${MATHS_HDF_SOURCE_DIR} ${MATHS_SOURCE_DIR})
+# mathplot_readcurves
+include(${MPLOT_READCURVES_SOURCE_DIR}/cmake/module_definitions.cmake)
+setup_module_variables_for_mathplot_readcurves (${MPLOT_READCURVES_SOURCE_DIR} ${MATHS_SOURCE_DIR})
+
 
 #
 # This program uses sm::hdfdata
@@ -98,7 +107,6 @@ set(MY_RD_MODULES
   ${SM_HDFDATA_MODULES}
   ${SM_HEXGRID_HDF_MODULES}
   ${MPLOT_CORE_MODULES}
-  ${MPLOT_MATHS_READCURVES_MODULES}
   ${MPLOT_READCURVES_MODULES}
   ${MPLOT_SOURCE_DIR}/mplot/HexGridVisual.cppm
   ${MPLOT_SOURCE_DIR}/mplot/GraphVisual.cppm
