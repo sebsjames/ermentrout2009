@@ -21,7 +21,7 @@ install the mathplot dependencies.
 sudo apt install build-essential cmake git ninja-build  \
                  freeglut3-dev libglu1-mesa-dev libxmu-dev libxi-dev \
                  libglfw3-dev libfreetype-dev clang-20 clang-tools-20 \
-                 librapidxml-dev libhdf5-dev
+                 libhdf5-dev
 ```
 
 If you're building on a Mac, you can refer to mathplot's [Mac
